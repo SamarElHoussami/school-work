@@ -1,0 +1,4 @@
+10 John Doe 64.5
+40 Alice Bower 54.0
+30 Jim Smith 78.2
+20 Mary Jane 92.3

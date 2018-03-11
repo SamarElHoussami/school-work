@@ -1,0 +1,171 @@
+Script started on Sun Jan 29 18:21:36 2017
+[?1034hbash-3.2$ cat assign1.c
+/*	
+	Title: Assign1.c
+	Author: Samar El-Houssami
+	Date last modified: 01/29/2017
+	Objective: Finds prime numbers of the factorial of inputed through a text file
+	
+*/
+
+//Includes
+#include <stdio.h>
+
+//Prototypes
+int find_prime_count(int, int);	//finds number of times prime a prime number hoes into the factorial of the input
+int find_next_prime(int);		//finds next prime number
+int is_prime(int);				//checks if a number is prime
+
+int main()
+{
+	int inp = 0, maxOnLine = 0;
+	
+	FILE *fp;
+	fp = fopen("input.txt", "r");	//opens file
+	fscanf(fp, "%d", &inp);			//reads first integer
+
+	for (int i = 0; inp != 0; i++)	//while the input != 0
+	{
+		int prime = 2, countPrime = 0;
+		
+		printf("%3d! =  ", inp);
+		
+		do {
+			
+		if (is_prime(prime)) 			//if the number is prime
+		{
+			countPrime = find_prime_count(inp, prime);
+			printf("(%d^%d)", prime, countPrime);
+			maxOnLine++;
+			
+			if (prime == inp){			//end of prime numbers in the factorial
+				maxOnLine = 0;
+			}
+			
+			else if (maxOnLine == 9) {	//max number of pairs on one line
+				printf("\n\t");
+				maxOnLine = 0;
+			}
+			
+		}
+		
+		prime = find_next_prime(prime);	//update prime number
+		
+		if (prime <= inp)
+			printf("*");
+		
+		} while (prime <= inp);
+		
+		
+		printf("\n\n");
+		
+		fscanf(fp, "%d", &inp);			//reads next integer in the txt file
+	}
+	
+	fclose(fp);							//close file
+
+	return 0;
+}
+
+/**********************************
+Objective: Verify if number chosen is a prime number
+Input: prime
+Output: p_flag (either true or false)
+***********************************/
+int is_prime(int prime)
+{
+	int p_flag = 0;
+
+	for (int divisior = 2; divisior*divisior <= prime; divisior++){
+		if (prime % divisior == 0)
+			return p_flag;				//returns false if number isn't prime
+	}
+		p_flag = 1;
+		return p_flag;
+}
+
+/*************************************************************************
+Objective: Count how many times the prime number goes into the factorial
+Input: num and prime
+Output: countPrime (how many times the prime number goes into the factorial)
+*************************************************************************/
+int find_prime_count(int num, int prime)
+{
+	int countPrime = 0, j = prime;
+	
+	while (prime <= num)
+	{
+		for (int i = 1; i <= num;i++)
+		{
+			if (i%prime == 0)
+				countPrime++;
+		}
+		
+	prime = prime * j;
+	
+	}
+	
+	return countPrime;
+}
+
+/*************************************************************************
+Objective: Find the prime number that follows the previous one
+Input: prime
+Output: nextPrime (the new prime number)
+*************************************************************************/
+int find_next_prime(int prime)
+{
+	int i, k, nextPrime, flag = 0;
+
+	for (i = prime + 1 ;; i++)
+	{
+		for (k = 2; k < i; k++)
+		{
+			if (i%k==0)
+			{
+				flag = 1;
+				break;
+			}
+		}
+
+		if (flag == 0)
+		{
+			nextPrime = i;
+			break;
+		}
+		flag = 0;
+	}
+
+	return nextPrime;
+}bash-3.2$ cat input.tc[Kxt
+5
+53
+100
+0
+bash-3.2$ cc[K[Kgcc assign1.c
+a.ou    ./a.outbash-3.2$ ./a.out<input.txt
+  5! =  (2^3)*(3^1)*(5^1)
+
+ 53! =  (2^49)*(3^23)*(5^12)*(7^8)*(11^4)*(13^4)*(17^3)*(19^2)*(23^2)
+	*(29^1)*(31^1)*(37^1)*(41^1)*(43^1)*(47^1)*(53^1)
+
+100! =  (2^97)*(3^48)*(5^24)*(7^16)*(11^9)*(13^7)*(17^5)*(19^5)*(23^4)
+	*(29^3)*(31^3)*(37^2)*(41^2)*(43^2)*(47^2)*(53^1)*(59^1)*(61^1)
+	*(67^1)*(71^1)*(73^1)*(79^1)*(83^1)*(89^1)*(97^1)
+
+bash-3.2$ ls -l
+total 152
+-rw-r--r--  1 samar  staff  4317 25 Jan 17:57 Lab1.c
+-rwxr-xr-x  1 samar  staff  8720 29 Jan 18:22 a.out
+-rw-r--r--  1 samar  staff  1159 25 Jan 20:53 ass.c
+-rw-r--r--  1 samar  staff  2997 29 Jan 18:18 assign1.c
+-rw-r--r--  1 samar  staff  3339 29 Jan 18:22 assign1.txt
+-rw-r--r--  1 samar  staff    15 25 Jan 19:53 input.txt
+-rwxr-xr-x  1 samar  staff  8672 24 Jan 13:37 lab1
+-rwxr-xr-x  1 samar  staff  8672 24 Jan 13:19 lab2
+-rw-r--r--  1 samar  staff  4029 24 Jan 13:55 lab2.c
+-rwxr-xr-x  1 samar  staff  8708 25 Jan 21:29 test
+bash-3.2$ exit
+exit
+
+Script done on Sun Jan 29 18:23:04 2017

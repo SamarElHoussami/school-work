@@ -1,0 +1,588 @@
+Script started on Wed Mar 29 12:22:46 2017
+[?1034hbash-3.2$ exit./a.out[3Pexit[Kexit./a.outgcc assign5.c[C[C[C[C[C[C[C[C[C[Ccat[C[C[C[C[C[C[C[C[C[C
+/*	
+	Title: Assign5.c
+	Date last modified: 03/29/2017
+	Objective: Create a linked list of student information and allow user to add, delete, and search
+			   for students using menu options.
+	
+	
+*/
+	
+//Includes
+#include <stdio.h>
+#include <ctype.h>
+#include <stdlib.h>
+#include <string.h>
+
+//Structs
+typedef struct CourseInfo{
+	int courseID;
+	char courseName[30];
+} courseInfo;
+
+
+typedef struct StudentInfo{ 
+	char StudentID[20];
+	char firstName[20]; 
+	char lastName[25]; 
+	int numberCourses;
+	courseInfo courses[10];
+	struct StudentInfo *next;
+} studentInfo;
+
+//Prototypes
+studentInfo *loadStudentInfo(studentInfo *SLIST);
+studentInfo *storeInList(char *, char *, char *, int, courseInfo[], studentInfo *SLIST);
+void saveStudentInfo(studentInfo *SLIST);
+void displayStrudentInfo(studentInfo *SLIST);
+studentInfo *addStudent(studentInfo *SLIST);
+void searchStudentID(studentInfo *SLIST);
+void searchStudentlName(studentInfo *SLIST);
+void deleteStudent(studentInfo **SLIST);
+void Exit();
+
+int main()
+{
+	studentInfo *SLIST = NULL;	//empty struct pointer
+	
+	int select;	//menu selection
+	
+	SLIST = loadStudentInfo(SLIST);
+
+	//display menu
+	do {
+		printf("\n\nSelect a menu option:\n");
+		printf("1. Add new student\n");
+		printf("2. Delete a student\n");
+		printf("3. Search for a student\n");
+		printf("4. Display current students\n");
+		printf("5. Save student information to a file\n");
+		printf("6. Exit\n\n");	
+		
+		scanf("%d", &select);
+		
+		while (select < 1 || select > 6)
+		{
+			printf("Invalid input\n");
+			scanf("%d", &select);
+		}
+		
+		switch(select)
+		{
+		case 1: SLIST = addStudent(SLIST);
+				break;
+		case 2: deleteStudent(&SLIST);
+				break;
+		case 3: searchStudentlName(SLIST);
+				break;
+		case 4: displayStrudentInfo(SLIST);
+				break;
+		case 5: saveStudentInfo(SLIST);
+				break;
+		case 6: Exit(SLIST);
+				break;
+		}
+
+	} while (select != 6);
+	
+	if(SLIST)
+		free(SLIST);
+	
+	return 0;
+}
+
+// Objective: read the student information from a file
+// Input: pointer to linked list
+// Output: modified list of student information
+studentInfo *loadStudentInfo(studentInfo *SLIST)
+{
+	char StudentID[10];
+	char firstName[20]; 
+	char lastName[25]; 
+	int numberCourses;
+	courseInfo courses[10];
+	char line[100];
+	
+	int next = 0;
+	
+	FILE *fptr;
+	
+	if((fptr = fopen("studentList.txt","r")) == NULL)	
+		printf("File could not be opened.\n");
+	
+	else
+	{
+		fscanf(fptr, "%20s\n", line);
+	
+		while(strcmp(line, "***") != 0)
+		{
+			switch(next)
+			{
+				case 0: strcpy(StudentID, line);
+						break;
+				case 1: strcpy(firstName, line);
+						break;
+				case 2: strcpy(lastName, line);
+						break;
+				case 3: numberCourses = atoi(line);
+						break;
+				case 4: for(int i = 0; i < numberCourses; i++)	
+							fscanf(fptr, "%s %d\n", courses[i].courseName, &courses[i].courseID);
+						break;
+			}
+			
+			
+			if(next == 4)
+			{
+				SLIST = storeInList(StudentID, firstName, lastName, numberCourses, courses, SLIST);	
+				next = 0; //reset for every student
+				fscanf(fptr, "%s\n", line);	//read next line
+			}
+		
+			else
+			{
+				next++;
+		
+				if(next != 4)
+					fscanf(fptr, "%s\n", line);
+			}
+		}
+	}
+
+	//close file
+	fclose(fptr); 
+	
+	return SLIST;
+} 
+
+// Objective: Store the student information from the file into the linked list
+// Input: StudentID, firstName, lastName, number of courses, array of course structures, pointer to list
+// Output: modified list of student information
+studentInfo *storeInList(char sID[9], char fName[20], char lName[25], int numCourses, courseInfo nCourses[10], studentInfo *SLIST)
+{
+	studentInfo *aStudent = (studentInfo *) malloc(sizeof(studentInfo));
+	
+	strcpy(aStudent->StudentID, sID);
+	strcpy(aStudent->firstName, fName);
+	strcpy(aStudent->lastName, lName);
+	aStudent->numberCourses = numCourses;
+	
+	for(int i = 0; i < (aStudent->numberCourses); i++)
+	{
+		aStudent->courses[i].courseID = nCourses[i].courseID;
+		strcpy(aStudent->courses[i].courseName, nCourses[i].courseName);
+	}	
+	
+	if (SLIST == NULL)
+		 return aStudent;
+	
+		 studentInfo *pStudent = SLIST;
+
+    while(pStudent->next != NULL)
+        pStudent = pStudent->next;
+
+    pStudent->next = aStudent;
+	
+	
+return SLIST;
+
+} 
+
+// Objective: Print every node in the linked list
+// Input: pointer to linked list
+// Output: none
+void displayStrudentInfo(studentInfo *SLIST)
+{
+	int k = 1;
+	
+	while(SLIST != NULL) {
+		printf("Student %d:\n", k);
+        printf("%s\n%s\n%s\n%d\n", SLIST->StudentID, SLIST->firstName, SLIST->lastName, SLIST->numberCourses);
+       
+	   for(int i = 0; i < (SLIST->numberCourses); i++)
+		   printf("%s %d\n", SLIST->courses[i].courseName, SLIST->courses[i].courseID);
+	  
+	  //go to next node
+	  SLIST = SLIST->next;
+	  printf("\n");
+	  
+	  k++;
+    }
+
+	return;
+}
+
+// Objective: Search for a student information using a student ID and display information if student is found
+// Input: pointer to linked list
+// Output: none
+void searchStudentID(studentInfo *SLIST)
+{
+	char searchID[9];
+	printf("Enter student's ID:  ");
+	scanf("%s", searchID);
+	
+	//search through entire list
+	while(SLIST != NULL)
+	{
+		if(strcmp(SLIST->StudentID, searchID) == 0)
+		{
+			printf("%s\n%s\n%s\n%d\n", SLIST->StudentID, SLIST->firstName, SLIST->lastName, SLIST->numberCourses);
+			for(int i = 0; i < SLIST->numberCourses; i++)
+				printf("%s %d\n", SLIST->courses[i].courseName, SLIST->courses[i].courseID);
+		return;
+		}
+		SLIST = SLIST->next;	//go to next node
+	}
+	
+	printf("Student not found.");
+	return;
+}
+
+// Objective: Search for a student information using a last name and display information if student is found
+// Input: pointer to linked list
+// Output: none
+void searchStudentlName(studentInfo *SLIST)
+{
+	char searchName[25];
+	printf("Enter student's last name:  ");
+	scanf("%s", searchName);
+	
+	//search through entire list
+	while(SLIST != NULL)
+	{	
+		if(strcmp(SLIST->lastName, searchName) == 0)
+		{
+			printf("Results:\n");
+			printf("%s\n%s\n%s\n%d\n", SLIST->StudentID, SLIST->firstName, SLIST->lastName, SLIST->numberCourses);
+			for(int i = 0; i < SLIST->numberCourses; i++)
+				printf("%s %d\n", SLIST->courses[i].courseName, SLIST->courses[i].courseID);
+		return;
+		}
+		
+		SLIST = SLIST->next;	//go to next node
+	}
+	
+	printf("Student not found.");
+	return;
+}
+
+// Objective: add a student into the linked list using the student ID to make it in increasing order
+// Input: pointer to linked list
+// Output: modified list of student information
+studentInfo *addStudent(studentInfo *SLIST)
+{
+	studentInfo *aStudent = (studentInfo *) malloc(sizeof(studentInfo));
+	
+	//get student information from keyboard
+	printf("Adding new student:\n");
+	printf("Student ID: ");
+	scanf("%s", aStudent->StudentID);
+	
+	//look for duplicate ID
+	studentInfo *tStudent = SLIST;
+	
+	while(tStudent != NULL)
+		
+	{
+		if(strcmp(tStudent->StudentID, aStudent->StudentID) == 0)
+		{
+			printf("Student ID already exists.\n");
+			return SLIST;
+		}
+		
+		tStudent = tStudent->next;
+	}
+	
+	printf("First name: ");
+	scanf("%s", aStudent->firstName);
+	printf("Last name: ");
+	scanf("%s", aStudent->lastName);
+	printf("Number of courses: ");
+	scanf("%d", &(aStudent->numberCourses));
+	for(int i = 0; i < (aStudent->numberCourses); i++)
+	{
+		printf("Course ID: ");
+		scanf("%d", &(aStudent->courses[i].courseID));
+		printf("Course Name: ");
+		scanf("%s", aStudent->courses[i].courseName);
+	}	
+	
+	 if (SLIST == NULL) 
+		 return aStudent;
+
+    studentInfo *pStudent = SLIST;
+	studentInfo *temp;
+
+	int flag = 0;
+   
+   //add student in increasing student ID order
+   while(1)
+	{
+		//the new student ID < the first student ID in SLIST
+		if((strcmp(aStudent->StudentID, pStudent->StudentID) <= 0) && (flag == 0)) 
+		{
+			//add student to top of list
+			SLIST = aStudent;
+			aStudent->next = pStudent;	
+			break;
+		}
+		//the new student ID > the current student ID in SLIST
+		else if(strcmp(aStudent->StudentID, pStudent->StudentID) >= 0)
+		{
+			//the current student is the last one in SLIST
+			if(pStudent->next == NULL)
+		{
+			//add student to end of list
+			pStudent->next = aStudent;
+			break;
+		}
+			//the new student ID < the next student ID in SLIST
+			else if(strcmp(aStudent->StudentID, (pStudent->next)->StudentID) < 0)
+			{
+			temp->next = pStudent->next;
+			pStudent->next = aStudent;
+			aStudent->next = temp->next;
+			break;
+			}
+		}
+		
+		pStudent = pStudent->next;
+		flag++;
+	}
+	        
+	return SLIST;
+}
+
+// Objective: Search for a student using a student ID and delete student if found
+// Input: pointer to linked list
+// Output: none
+void deleteStudent(studentInfo **SLIST)
+{
+	char searchID[10];
+	printf("Student ID: ");
+	scanf("%s", searchID);
+	
+	studentInfo *temp = *SLIST, *prev;
+	
+	//if the student information to be deleted is the first one on the list
+	if(strcmp(temp->StudentID, searchID) == 0)
+	{
+		//make the head of list the next student info
+		*SLIST = temp->next;
+		free(temp);
+		return;
+	}
+	
+	//go through list until tempID = searchID
+	while(temp != NULL && strcmp(temp->StudentID, searchID) != 0)
+	{
+		prev = temp;
+		temp = temp->next;
+	}
+	
+	//student not found
+	if (temp == NULL) 
+	{
+		printf("Student not found.");
+		return;
+	}
+	
+	//skip temp
+	prev->next = temp->next;
+	
+	//delete temp
+	free(temp);
+}
+
+// Objective: Save student info list into file
+// Input: pointer to linked list
+// Output: none
+void saveStudentInfo(studentInfo *SLIST)
+{
+	FILE *fptr;
+	
+	//open file
+	if((fptr = fopen("studentList.txt","w")) == NULL)
+		printf("Unable to open file.\n");
+	
+	else{
+		//go through entire list and print each node
+		while(SLIST != NULL) {
+        fprintf(fptr, "%s\n%s\n%s\n%d\n", SLIST->StudentID, SLIST->firstName, SLIST->lastName, SLIST->numberCourses);
+       
+	   for(int i = 0; i < (SLIST->numberCourses); i++)
+		   fprintf(fptr, "%s %d\n", SLIST->courses[i].courseName, SLIST->courses[i].courseID);
+	  
+	  SLIST = SLIST->next;
+		}
+	}
+	
+	fprintf(fptr, "***");
+	return;
+}
+
+// Objective: Ask user to save list into file before exiting the program
+// Input: pointer to linked list
+// Output: none
+void Exit(studentInfo *SLIST)
+{
+	char c[1];
+	printf("Save student information to file before leaving? (Y/N): ");
+	
+	do{
+		scanf("%s", c);
+		c[0] = toupper(c[0]);
+	
+	//Save student list
+	if(strcmp(c,"Y") == 0)
+	{
+		printf("Student List saved successfully.\nBye!\n");
+		saveStudentInfo(SLIST);
+	}
+	//Don't save student list
+	else if (strcmp(c,"N") == 0)
+		printf("OK! Bye!\n");
+	
+	else
+		printf("Invalid input.\n");
+	} while((strcmp(c,"Y")) != 0 && (strcmp(c,"N") != 0));
+	
+	return;
+}bash-3.2$ cat assign5.c[C[C[C[C[C[C[C[C[C[Cexit[K./a.outgcc assign5.c
+bash-3.2$ ./a.out
+
+
+Select a menu option:
+1. Add new student
+2. Delete a student
+3. Search for a student
+4. Display current students
+5. Save student information to a file
+6. Exit
+
+1
+Adding new student:
+Student ID: 222222222
+First name: Alex
+Last name: Simpson
+Number of courses: 1
+Course ID: 412
+Course Name: CMSC
+
+
+Select a menu option:
+1. Add new student
+2. Delete a student
+3. Search for a student
+4. Display current students
+5. Save student information to a file
+6. Exit
+
+4
+Student 1:
+111111111
+Lisa
+Porter
+3
+ENEE 114
+CMSC 412
+ENME 515
+
+Student 2:
+222222222
+Alex
+Simpson
+1
+CMSC 412
+
+Student 3:
+333333333
+John
+Rezaei
+2
+CMSC 412
+MATH 123
+
+
+
+Select a menu option:
+1. Add new student
+2. Delete a student
+3. Search for a student
+4. Display current students
+5. Save student information to a file
+6. Exit
+
+6
+Save student information to file before leaving? (Y/N): n
+OK! Bye!
+bash-3.2$ e[Kls -l
+total 1128
+-rw-r--r--  1 samar  staff   4329  7 Feb 19:25 Lab1.c
+-rwxr-xr-x  1 samar  staff  13652 29 Mar 12:22 a.out
+-rwxr-xr-x  1 samar  staff   8632 15 Feb 00:07 assign1
+-rw-r--r--  1 samar  staff   3042 15 Feb 00:07 assign1.c
+-rw-r--r--  1 samar  staff   4326 29 Jan 18:23 assign1.txt
+-rwxr-xr-x  1 samar  staff   8852 12 Feb 18:56 assign2
+-rw-r--r--  1 samar  staff   5790 12 Feb 18:58 assign2.c
+-rw-r--r--  1 samar  staff   7532 12 Feb 19:05 assign2.txt
+-rwxr-xr-x  1 samar  staff   9156 12 Mar 16:26 assign3
+-rw-r--r--  1 samar  staff   6652 12 Mar 16:33 assign3.c
+-rw-r--r--  1 samar  staff  11181 12 Mar 19:44 assign3.txt
+-rwxr-xr-x  1 samar  staff  13516 26 Mar 17:43 assign4
+-rw-r--r--  1 samar  staff   5851 26 Mar 17:50 assign4.c
+-rwxr-xr-x  1 samar  staff  13652 29 Mar 11:34 assign5
+-rw-r--r--  1 samar  staff  10844 29 Mar 11:34 assign5.c
+-rw-r--r--  1 samar  staff  12541 29 Mar 12:23 assign5.txt
+-rwxr-xr-x  1 samar  staff  13468 27 Mar 12:35 assign5a
+-rw-r--r--  1 samar  staff   7771 27 Mar 12:35 assign5a.c
+-rw-r--r--  1 samar  staff     96 21 Mar 16:42 employee.dat
+-rw-r--r--  1 samar  staff    352 21 Mar 21:27 employeeDA.dat
+-rwxr-xr-x  1 samar  staff   9140 12 Mar 16:04 hey
+-rw-r--r--  1 samar  staff   6623 12 Mar 16:22 heyy.c
+-rwxr-xr-x  1 samar  staff   8564 12 Feb 19:36 ids
+-rw-r--r--  1 samar  staff    511 11 Mar 19:11 ids.c
+-rw-r--r--  1 samar  staff     75 21 Mar 21:08 inc.txt
+-rw-r--r--  1 samar  staff    123 26 Mar 16:13 input.csv
+-rw-r--r--  1 samar  staff    123 26 Mar 15:13 input.cvs
+-rw-r--r--  1 samar  staff     15 25 Jan 19:53 input.txt
+-rw-r--r--  1 samar  staff    181 12 Mar 16:06 input2.txt
+-rwxr-xr-x  1 samar  staff   8672 24 Jan 13:37 lab1
+-rwxr-xr-x  1 samar  staff   8672 24 Jan 13:19 lab2
+-rw-r--r--  1 samar  staff   4036  7 Feb 19:26 lab2.c
+-rwxr-xr-x  1 samar  staff   9044  7 Feb 12:38 lab3
+-rw-r--r--  1 samar  staff   4469  7 Feb 12:38 lab3.c
+-rwxr-xr-x  1 samar  staff   8764 14 Feb 12:19 lab4
+-rw-r--r--  1 samar  staff   1453 14 Feb 13:55 lab4.c
+-rwxr-xr-x  1 samar  staff   8860 28 Feb 12:23 lab5
+-rw-r--r--  1 samar  staff   2039 28 Feb 10:00 lab5.c
+-rw-r--r--  1 samar  staff    900 28 Feb 14:09 lab5a.c
+-rw-r--r--  1 samar  staff   2065 28 Feb 10:02 lab5b.c
+-rwxr-xr-x  1 samar  staff   8748  8 Mar 11:36 lab6
+-rw-r--r--  1 samar  staff   2014  7 Mar 13:10 lab6.c
+-rwxr-xr-x  1 samar  staff   8788 14 Mar 13:32 lab7a
+-rw-r--r--  1 samar  staff   3583 14 Mar 12:54 lab7a.c
+-rwxr-xr-x  1 samar  staff   8804 14 Mar 11:44 lab7b
+-rw-r--r--  1 samar  staff   1552 14 Mar 11:51 lab7b.c
+-rwxr-xr-x  1 samar  staff   8948 14 Mar 13:43 lab8
+-rwxr-xr-x  1 samar  staff   8948 21 Mar 16:41 lab8a
+-rw-r--r--  1 samar  staff   2120 28 Mar 13:10 lab8a.c
+-rwxr-xr-x  1 samar  staff   8828 21 Mar 16:42 lab8b
+-rw-r--r--  1 samar  staff   1409 27 Mar 13:42 lab8b.c
+-rwxr-xr-x  1 samar  staff   8940 21 Mar 21:27 lab8c
+-rw-r--r--  1 samar  staff   2044 28 Mar 13:11 lab8c.c
+-rwxr-xr-x  1 samar  staff   9044 21 Mar 21:21 lab8d
+-rw-r--r--  1 samar  staff   2119 27 Mar 13:53 lab8d.c
+-rw-r--r--  1 samar  staff   3356 28 Mar 13:12 lab9.c
+-rw-r--r--  1 samar  staff     96 29 Mar 11:35 studentList.txt
+-rw-r--r--  1 samar  staff    476 14 Feb 13:40 template.c
+-rw-r--r--  1 samar  staff    920 14 Feb 13:35 test.c
+-rwxr-xr-x  1 samar  staff  17292 28 Feb 13:42 test1
+-rw-r--r--  1 samar  staff  14470 27 Feb 08:31 test1.c
+-rwxr-xr-x  1 samar  staff  17388 26 Feb 20:52 tictactoe
+-rw-r--r--  1 samar  staff  13372 26 Feb 17:40 tictactoe.c
+bash-3.2$ exit
+exit
+
+Script done on Wed Mar 29 12:24:02 2017
